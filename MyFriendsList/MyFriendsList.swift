@@ -12,7 +12,6 @@ struct MyFriendsList: View {
     @State private var friends: [String] = []
     @State private var filteredFriends: [String] = []
     @State private var friendName: String = ""
-    @State private var searchString: String = ""
     @State private var isSearching: Bool = false
     
     var body: some View {
@@ -20,72 +19,66 @@ struct MyFriendsList: View {
             Color.cyan.edgesIgnoringSafeArea(.all)
             VStack {
                 HStack {
-                    if !isSearching {
-                        TextField("Enter your friend's name to add", text: $friendName)
-                            .onSubmit {
-                                if !friendName.isEmpty {
-                                    friends.append(friendName)
-                                    friendName = ""
-                                }
-                            }
-                            .padding(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 10))
-                            .textFieldStyle(.roundedBorder)
-                    }
                     
-                    if !isSearching {
-                        
-                        Button("Add") {
-                            withAnimation {
-                                if !friendName.isEmpty {
-                                    friends.append(friendName)
-                                    friendName = ""
-                                }
+                    TextField(isSearching ? "Search Friend" : "Enter a name to add", text: $friendName)
+                        .onSubmit {
+                            if !friendName.isEmpty {
+                                friends.append(friendName)
+                                friendName = ""
                             }
                         }
-                        .buttonStyle(.bordered)
-                        .tint(.white)
+                        .padding(EdgeInsets(top: 0, leading: 20, bottom: 10, trailing: 10))
+                        .textFieldStyle(.roundedBorder)
+                        .onChange(of: friendName) {
+                            
+                            if friendName.isEmpty {
+                                filteredFriends = friends
+                            } else {
+                                filteredFriends = friends.filter{ $0.contains(friendName) }
+                            }
+                        }
+                    
+                    Button(isSearching ? "Add Friend" : "Add") {
+                        withAnimation {
+                            
+                            if !isSearching {
+                                if !friendName.isEmpty {
+                                    friends.append(friendName)
+                                    friendName = ""
+                                }
+                            } else {
+                                isSearching.toggle()
+                            }
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(.white)
+                    .padding(EdgeInsets(top: 0, leading: 0, bottom: 10, trailing: isSearching ? 20 : 0))
+                    
+                    if !isSearching {
                         
                         Button("Search") {
                             withAnimation {
                                 isSearching.toggle()
+                                filteredFriends = friends
                             }
                         }
                         .buttonStyle(.bordered)
                         .tint(.white)
-                        .padding()
+                        .padding(EdgeInsets(top: 0, leading: 10, bottom: 10, trailing: 20))
                     }
                 }
                 
                 if isSearching {
                     
-                    VStack {
-                        
-                        Button("Add Friend") {
-                            withAnimation {
-                                isSearching.toggle()
-                            }
+                    List(filteredFriends, id: \.self) { friend in
+                        VStack {
+                            Text(friend)
                         }
-                        .buttonStyle(.bordered)
-                        .tint(.white)
-                        .padding(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0))
-                        
-                        List(filteredFriends, id: \.self) { friend in
-                            VStack {
-                                Text(friend)
-                            }
-                            .listRowSeparator(.visible)
-                        }
-                        .searchable(text: $searchString)
-                        .onChange(of: searchString) { oldValue, newValue in
-                            if searchString.isEmpty {
-                                filteredFriends = friends
-                            } else {
-                                filteredFriends = friends.filter{ $0.contains(searchString) }
-                            }
-                        }
-                        .onAppear {
-                            filteredFriends = friends
-                        }
+                        .listRowSeparator(.visible)
+                    }
+                    .onAppear {
+                        filteredFriends = friends
                     }
                 } else {
                     List(friends, id: \.self) { friend in
